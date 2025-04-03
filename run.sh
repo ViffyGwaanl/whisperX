@@ -1,6 +1,7 @@
 #!/bin/bash
 # run.sh - 全新启动脚本，用于启动 WhisperX 项目
 # 此脚本自动选择兼容的 Python（要求版本在 3.9 到 3.12 之间），若已有虚拟环境的 Python 版本不符合要求，则自动删除并重建
+# 同时如果未指定 --compute_type 参数，则默认将其设置为 float32；如果未指定 --language 参数，则默认使用中文 "zh"
 
 # 终止脚本遇到错误时退出
 set -e
@@ -111,5 +112,18 @@ if [ $INSTALL_EXIT_CODE -ne 0 ]; then
   exit $INSTALL_EXIT_CODE
 fi
 
-echo "运行 whisperx 项目..."
-python -m whisperx "$@"
+# 判断是否传入参数
+if [ "$#" -eq 0 ]; then
+  echo "未提供音频输入参数，显示帮助信息："
+  python -m whisperx --help
+else
+  ARGS="$@"
+  if ! echo "$ARGS" | grep -q -- "--compute_type"; then
+    ARGS="--compute_type int8 $ARGS"
+  fi
+  if ! echo "$ARGS" | grep -q -- "--language"; then
+    ARGS="--language zh $ARGS"
+  fi
+  echo "运行 whisperx 项目..."
+  python -m whisperx $ARGS
+fi
